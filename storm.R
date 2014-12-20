@@ -2,6 +2,7 @@
 
 ## Packages
 library(dplyr)
+library(tidyr)
 
 ## Download data and prep for reading
 if(!file.exists("./storm.csv.bz2")){
@@ -45,3 +46,8 @@ storm <- storm %>%
            cropdmg = cropdmg * cropdmgexp
     ) %>%
     select(-propdmgexp, -cropdmgexp)
+
+## Gather fatalies and injuries into injType, propdgm and cropdmg into dmgType
+storm <- storm %>%
+    gather(dmgType, dmgCount, -(state:injuries)) %>%
+    gather(injType, injCount, -(state:evtype), -(dmgType:dmgCount))
