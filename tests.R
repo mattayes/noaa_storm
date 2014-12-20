@@ -65,54 +65,105 @@ storm <- storm %>%
 ## variable) are most harmful with respect to population health?
 
 ## Subset injury data and summarize
-harm <- storm %>%
+health <- storm %>%
     group_by(evtype, injType) %>%
     summarize(total = sum(injCount, na.rm = TRUE),
               avg = mean(injCount, na.rm = TRUE)
     ) %>%
     ungroup()
-harm
+health
 
 ## Top fatalities? Total vs. mean
-fatTotal <- harm %>%
+fatTotal <- health %>%
     filter(injType == "fatalities") %>%
     arrange(desc(total)) %>%
     head(5)
 fatTotal
-fatAvg <- harm %>%
+fatAvg <- health %>%
     filter(injType == "fatalities") %>%
     arrange(desc(avg)) %>%
     head(5)
 fatAvg
 
 ## Top injuries? Total vs. mean
-injTotal<- harm %>%
+injTotal<- health %>%
     filter(injType == "injuries") %>%
     arrange(desc(total))  %>%
     head(5)
 injTotal
-injAvg <- harm %>%
+injAvg <- health %>%
     filter(injType == "injuries") %>%
     arrange(desc(avg)) %>%
     head(5)
 injAvg
 
 ## Plot all four graphics together
-a <- ggplot(fatTotal, aes(x = reorder(evtype, -total), y = total)) +
+h1 <- ggplot(fatTotal, aes(x = reorder(evtype, -total), y = total)) +
     geom_bar(stat = "identity") +
     labs(x = "Event Type", y = "Total Fatalities", title = "Highest Fatalities")
-b <- ggplot(fatAvg, aes(x = reorder(evtype, -avg), y = avg)) +
+h2 <- ggplot(fatAvg, aes(x = reorder(evtype, -avg), y = avg)) +
     geom_bar(stat = "identity") +
     labs(x = "Event Type", y = "Mean Fatalities",
          title = "Average Fatalities per Event")
-c <- ggplot(injAvg, aes(x = reorder(evtype, -total), y = total)) +
+h3 <- ggplot(injAvg, aes(x = reorder(evtype, -total), y = total)) +
     geom_bar(stat = "identity") +
     labs(x = "Event Type", y = "Total Injuries", title = "Highest Injuries")
-d <- ggplot(injAvg, aes(x = reorder(evtype, -avg), y = avg)) +
+h4 <- ggplot(injAvg, aes(x = reorder(evtype, -avg), y = avg)) +
     geom_bar(stat = "identity") +
     labs(x = "Event Type", y = "Mean Injuries", 
          title = "Average Injuries per Event")
-grid.arrange(arrangeGrob(a, b, c, d, main = "Effects on Population Health"))
+grid.arrange(arrangeGrob(h1, h2, h3, h4, main = "Effects on Population Health"))
 
 ## Across the United States, which types of events have the greatest economic 
 ## consequences?
+
+econ <- storm %>%
+    group_by(evtype, dmgType) %>%
+    summarize(total = sum(dmgCount, na.rm = TRUE),
+              avg = mean(dmgCount, na.rm = TRUE)
+    ) %>%
+    ungroup()
+econ
+
+## Top fatalities? Total vs. mean
+propTotal <- econ %>%
+    filter(dmgType == "propdmg") %>%
+    arrange(desc(total)) %>%
+    head(5)
+propTotal
+propAvg <- econ %>%
+    filter(dmgType == "propdmg") %>%
+    arrange(desc(avg)) %>%
+    head(5)
+propAvg
+
+## Top injuries? Total vs. mean
+cropTotal<- econ %>%
+    filter(dmgType == "cropdmg") %>%
+    arrange(desc(total))  %>%
+    head(5)
+cropTotal
+cropAvg <- econ %>%
+    filter(dmgType == "cropdmg") %>%
+    arrange(desc(avg)) %>%
+    head(5)
+cropAvg
+
+## Plot all four graphics together
+e1 <- ggplot(propTotal, aes(x = reorder(evtype, -total), y = total)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Event Type", y = "Total (dollars)", 
+         title = "Highest Property Damage")
+e2 <- ggplot(propAvg, aes(x = reorder(evtype, -avg), y = avg)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Event Type", y = "Mean (dollars)",
+         title = "Average Property Damage per Event")
+e3 <- ggplot(cropTotal, aes(x = reorder(evtype, -total), y = total)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Event Type", y = "Total (dollars)",
+         title = "Highest Crop Damage")
+e4 <- ggplot(cropAvg, aes(x = reorder(evtype, -avg), y = avg)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Event Type", y = "Mean (dollars)",
+         title = "Average Crop Damage per Event")
+grid.arrange(arrangeGrob(e1, e2, e3, e4, main = "Economic Consequences"))
