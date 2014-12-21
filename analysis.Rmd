@@ -8,3 +8,153 @@ output: html_document
 ## Synopsis
 While tornados resulted in the most fatalities, both in total and on average, most injuries come from wildfires (total) and heat waves (on average). Property and crop damage share a common theme: too much water isn't good. Floods, hurricanes, and typhoons top the lists, both in total and on average.
 
+## Data Processing
+
+The original dataset, [found here](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2), is very expansive and we won't need all of it for analysis. A little pre-processing will make the data more workable.
+
+First our packages:
+
+```{r prepack}
+library(dplyr)
+library(tidyr)
+```
+
+Assuming you've downloaded the data, we need to read it in. It's important to note that `NA` values are represented by empty strings.
+```{r read, cache = TRUE}
+storm <- tbl_df(read.csv("./storm.csv.bz2", stringsAsFactors = FALSE, 
+                         na.strings = c(NA, "")
+))
+storm
+```
+
+We'll only need seven variables: `EVTYPE`, `FATALITIES`, `INJURIES`, `PROPDMG`, `PROPDMGEXP`, `CROPDMG`, and `CROPDMGEXP`.
+
+```{r subset}
+storm <- storm %>%
+    select(EVTYPE, FATALITIES:CROPDMGEXP)
+names(storm) <- tolower(names(storm))
+storm
+```
+
+The variables `propdmgexp` and `cropdmgexp` are multipliers, where K = thousands, M = millions, and B = billions. Do they take any other values in our data set?
+
+```{r unique}
+unique(storm$propdmgexp)
+unique(storm$cropdmgexp)
+```
+
+Looks like we have some data entry issues. Given this, we need to remove any records that do not match our known multipliers.
+
+```{r multremove}
+storm <- mutate(storm, propdmgexp = tolower(propdmgexp),
+                cropdmgexp = tolower(propdmgexp))
+good <- c("k", "m", "b", NA) 
+gProp <- storm$propdmgexp %in% good
+gCrop <- storm$cropdmgexp %in% good
+storm$propdmgexp[!gProp] <- NA
+storm$cropdmgexp[!gCrop] <- NA
+rm(good, gProp, gCrop)
+unique(storm$propdmgexp)
+unique(storm$cropdmgexp)
+```
+
+Let's convert these multipliers to their respective numerical equivalents and use them to find the true values of property and crop damage.
+```{r mult}
+storm <- storm %>%
+    mutate(propdmgexp = gsub("k", 1000, propdmgexp),
+           propdmgexp = gsub("m", 1000000, propdmgexp),
+           propdmgexp = gsub("b", 1000000000, propdmgexp),
+           cropdmgexp = gsub("k", 1000, cropdmgexp),
+           cropdmgexp = gsub("m", 1000000, cropdmgexp),
+           cropdmgexp = gsub("b", 1000000000, cropdmgexp),
+           propdmgexp = as.numeric(propdmgexp),
+           cropdmgexp = as.numeric(cropdmgexp),
+           propdmg = propdmg * propdmgexp,
+           cropdmg = cropdmg * cropdmgexp
+    ) %>%
+    select(-propdmgexp, -cropdmgexp)
+storm
+```
+
+I prefer working with tall datasets. Let's tidy the dataset by gathering fatalities and injuries, as well as property and crop damage.
+
+```{r gather}
+storm <- storm %>%
+    gather(dmgType, dmgCount, -(evtype:injuries)) %>%
+    gather(injType, injCount, -evtype, -(dmgType:dmgCount))
+storm
+```
+
+## Health Consequences
+
+Across the United States, which types of events are most harmful with respect to population health? For this analysis, we'll use `fatalities` and `injuries` to represent population health consequences.
+
+We'll need some extra packages.
+```{r packhealth}
+library(ggplot2)
+library(gridExtra)
+```
+
+
+Using our `storm` data, let's look at total and mean fatalities/injuries by event type.
+
+```{r health}
+health <- storm %>%
+    group_by(evtype, injType) %>%
+    summarize(total = sum(injCount, na.rm = TRUE),
+              avg = mean(injCount, na.rm = TRUE)
+    ) %>%
+    ungroup()
+health
+```
+
+What are the top five "killer" storms, in total and on average?
+```{r healthfat}
+fatTotal <- health %>%
+    filter(injType == "fatalities") %>%
+    arrange(desc(total)) %>%
+    head(3)
+fatTotal
+fatAvg <- health %>%
+    filter(injType == "fatalities") %>%
+    arrange(desc(avg)) %>%
+    head(3)
+fatAvg
+```
+
+Tornados are by far the deadliest storms, results in `r fatTotal[3, 1]` deaths. It also kills the most per storm. Do tornados also injure the most people?
+
+```{r healthink}
+injTotal<- health %>%
+    filter(injType == "injuries") %>%
+    arrange(desc(total))  %>%
+    head(3)
+injTotal
+injAvg <- health %>%
+    filter(injType == "injuries") %>%
+    arrange(desc(avg)) %>%
+    head(3)
+injAvg
+```
+
+While tornados have also injured by far the most people, it appears that heat waves, on average, produce the most injuries.
+
+Let's visualize these findings.
+
+```{r healthplot, fig.height = 8, fig.width = 12}
+h1 <- ggplot(fatTotal, aes(x = reorder(evtype, -total), y = total)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Event Type", y = "Total Fatalities", title = "Highest Fatalities")
+h2 <- ggplot(fatAvg, aes(x = reorder(evtype, -avg), y = avg)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Event Type", y = "Mean Fatalities",
+         title = "Average Fatalities per Event")
+h3 <- ggplot(injAvg, aes(x = reorder(evtype, -total), y = total)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Event Type", y = "Total Injuries", title = "Highest Injuries")
+h4 <- ggplot(injAvg, aes(x = reorder(evtype, -avg), y = avg)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Event Type", y = "Mean Injuries", 
+         title = "Average Injuries per Event")
+grid.arrange(arrangeGrob(h1, h2, h3, h4, main = "Effects on Population Health"))
+```
