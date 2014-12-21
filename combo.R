@@ -14,19 +14,19 @@ econCombo <- econ %>%
     ungroup()
 healthComboTotal <-healthCombo %>%
     arrange(desc(total)) %>%
-    head(5)
+    head(3)
 healthComboTotal
 healthComboAvg <-healthCombo %>%
     arrange(desc(avg)) %>%
-    head(5)
+    head(3)
 healthComboAvg
 econComboTotal <- econCombo %>%
     arrange(desc(total)) %>%
-    head(5)
+    head(3)
 econComboTotal
 econComboAvg <- econCombo %>%
     arrange(desc(avg)) %>%
-    head(5)
+    head(3)
 econComboAvg
 
 ## Plot all the things
