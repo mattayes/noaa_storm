@@ -1,16 +1,15 @@
 ---
 title: "The Health and Economic Consequences of Storms"
 author: "Matthew Hayes"
-date: "12/20/2014"
 output: html_document
 ---
 
 ## Synopsis
-While tornados resulted in the most fatalities, both in total and on average, most injuries come from wildfires (total) and heat waves (on average). Property and crop damage share a common theme: too much water isn't good. Floods, hurricanes, and typhoons top the lists, both in total and on average.
+Tornados resulted in the most fatalities, both in total and on average. Most injuries come from tornados (total) and heat waves (on average). Property and crop damage share a common theme: too much water isn't good. Floods, hurricanes, and typhoons top the lists, both in total and on average. When considering combined health consequences, tornados result in the most harm by far, but on average one should be more concerned with heat waves, tropical storms, and wildfires. As for economic consequences, it can't be said enough: Water and wind are costly.
 
 ## Data Processing
 
-The original dataset, [found here](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2), is very expansive and we won't need all of it for analysis. A little pre-processing will make the data more workable.
+The original dataset, [found here](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2), is very expansive and we won't need all of it for this analysis. A little pre-processing will make the data much more workable.
 
 First our packages:
 
@@ -19,7 +18,8 @@ library(dplyr)
 library(tidyr)
 ```
 
-Assuming you've downloaded the data, we need to read it in. It's important to note that `NA` values are represented by empty strings.
+It's important to note that `NA` values in this dataset are represented by empty strings.
+
 ```{r read, cache = TRUE}
 storm <- tbl_df(read.csv("./storm.csv.bz2", stringsAsFactors = FALSE, 
                          na.strings = c(NA, "")
@@ -36,7 +36,7 @@ names(storm) <- tolower(names(storm))
 storm
 ```
 
-The variables `propdmgexp` and `cropdmgexp` are multipliers, where K = thousands, M = millions, and B = billions. Do they take any other values in our data set?
+According to the [storm data documentation](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf), the variables `propdmgexp` and `cropdmgexp` are multipliers, where K = thousands, M = millions, and B = billions. Do they take any other values in our data set?
 
 ```{r unique}
 unique(storm$propdmgexp)
@@ -59,6 +59,7 @@ unique(storm$cropdmgexp)
 ```
 
 Let's convert these multipliers to their respective numerical equivalents and use them to find the true values of property and crop damage.
+
 ```{r mult}
 storm <- storm %>%
     mutate(propdmgexp = gsub("k", 1000, propdmgexp),
@@ -87,9 +88,10 @@ storm
 
 ## Health Consequences
 
-Across the United States, which types of events are most harmful with respect to population health? For this analysis, we'll use `fatalities` and `injuries` to represent population health consequences.
+Across the United States, which types of events are most harmful with respect to population health? For this analysis, we'll use `fatalities` and `injuries` to represent health consequences.
 
 We'll need some extra packages.
+
 ```{r packhealth}
 library(ggplot2)
 library(gridExtra)
@@ -123,7 +125,7 @@ fatAvg <- health %>%
 fatAvg
 ```
 
-Tornados are by far the deadliest storms, results in `r fatTotal[3, 1]` deaths. It also kills the most per storm. Do tornados also injure the most people?
+Tornados are by far the deadliest storms, results in `r fatTotal[1, 3]` deaths. It also kills the most per storm. Do tornados also injure the most people?
 
 ```{r healthink}
 injTotal<- health %>%
@@ -150,7 +152,7 @@ h2 <- ggplot(fatAvg, aes(x = reorder(evtype, -avg), y = avg)) +
     geom_bar(stat = "identity") +
     labs(x = "Event Type", y = "Mean Fatalities",
          title = "Average Fatalities per Event")
-h3 <- ggplot(injAvg, aes(x = reorder(evtype, -total), y = total)) +
+h3 <- ggplot(injTotal, aes(x = reorder(evtype, -total), y = total)) +
     geom_bar(stat = "identity") +
     labs(x = "Event Type", y = "Total Injuries", title = "Highest Injuries")
 h4 <- ggplot(injAvg, aes(x = reorder(evtype, -avg), y = avg)) +
@@ -206,7 +208,7 @@ cropAvg <- econ %>%
 cropAvg
 ```
 
-Most definitely. Unlike health, economic consequences tend to be consistent across property and crops, as well as in total and on average.
+Most definitely. Unlike health consequences, economic consequences tend to be consistent across property and crops, as well as in total and on average.
 
 Let's visualize our results.
 
@@ -228,4 +230,73 @@ e4 <- ggplot(cropAvg, aes(x = reorder(evtype, -avg), y = avg)) +
     labs(x = "Event Type", y = "Mean (dollars)",
          title = "Average Crop Damage per Event")
 grid.arrange(arrangeGrob(e1, e2, e3, e4, main = "Economic Consequences"))
+```
+
+## Results
+
+Across the United States, which types of events are more costly with respect to human health and economic well-being? We'll combine `fatalities` and `injuries` to represent human health. Economic well-being will be represented by combining `propdmg` and `cropdmg`.
+
+First let's combine our data.
+
+```{r combo}
+healthCombo <- health %>%
+    group_by(evtype) %>%
+    summarize(total = sum(total),
+              avg = mean(avg)) %>%
+    ungroup()
+healthCombo
+econCombo <- econ %>%
+    group_by(evtype) %>%
+    summarize(total = sum(total),
+              avg = mean(avg)) %>%
+    ungroup()
+econCombo
+```
+
+Next, we'll look at the top three offenders in each category.
+
+```{r comborank}
+healthComboTotal <-healthCombo %>%
+    arrange(desc(total)) %>%
+    head(3)
+healthComboTotal
+healthComboAvg <-healthCombo %>%
+    arrange(desc(avg)) %>%
+    head(3)
+healthComboAvg
+econComboTotal <- econCombo %>%
+    arrange(desc(total)) %>%
+    head(3)
+econComboTotal
+econComboAvg <- econCombo %>%
+    arrange(desc(avg)) %>%
+    head(3)
+econComboAvg
+```
+
+Tornados result in the most harm by far, but on average one should be more concerned with heat waves, tropical storms, and wildfires.
+
+As for economic consequences, it can't be said enough: Water and wind are costly.
+
+Finally, let's visualize it.
+
+```{r comboplot, fig.height = 7, fig.width = 14}
+c1 <- ggplot(healthComboTotal, aes(x = reorder(evtype, -total), y = total)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Event Type", y = "Total Fatalities/Injuries", 
+         title = "Highest Human Health Consequences")
+c2 <- ggplot(healthComboAvg, aes(x = reorder(evtype, -avg), y = avg)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Event Type", y = "Mean Fatalities/Injuries",
+         title = "Average Human Health Consequences per Event")
+c3 <- ggplot(econComboTotal, aes(x = reorder(evtype, -total), y = total)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Event Type", y = "Total Damage (dollars)",
+         title = "Highest Economic Damage")
+c4 <- ggplot(econComboAvg, aes(x = reorder(evtype, -avg), y = avg)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Event Type", y = "Mean Damage (dollars)",
+         title = "Average Economic Damage per Event")
+grid.arrange(arrangeGrob(c1, c2, c3, c4, 
+                         main = "Health and Economic Consequences"))
 ```
