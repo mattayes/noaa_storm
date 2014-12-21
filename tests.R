@@ -167,3 +167,31 @@ e4 <- ggplot(cropAvg, aes(x = reorder(evtype, -avg), y = avg)) +
     labs(x = "Event Type", y = "Mean (dollars)",
          title = "Average Crop Damage per Event")
 grid.arrange(arrangeGrob(e1, e2, e3, e4, main = "Economic Consequences"))
+
+## Wombo combo
+healthCombo <- health %>%
+    group_by(evtype) %>%
+    summarize(total = sum(total),
+              avg = mean(avg)) %>%
+    ungroup()
+econCombo <- econ %>%
+    group_by(evtype) %>%
+    summarize(total = sum(total),
+              avg = mean(avg)) %>%
+    ungroup()
+healthComboTotal <-healthCombo %>%
+    arrange(desc(total)) %>%
+    head(5)
+healthComboTotal
+healthComboAvg <-healthCombo %>%
+    arrange(desc(avg)) %>%
+    head(5)
+healthComboAvg
+econComboTotal <- econCombo %>%
+    arrange(desc(total)) %>%
+    head(5)
+econComboTotal
+econComboAvg <- econCombo %>%
+    arrange(desc(avg)) %>%
+    head(5)
+econComboAvg
