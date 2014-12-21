@@ -1,6 +1,12 @@
 ## Across the United States, which types of events (as indicated in the EVTYPE 
 ## variable) are most harmful with respect to population health?
 
+## Prerequisite: storm.R
+
+## Packages
+library(ggplot2)
+library(gridExtra)
+
 ## Subset injury data and summarize
 health <- storm %>%
     group_by(evtype, injType) %>%

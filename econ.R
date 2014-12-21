@@ -1,6 +1,12 @@
 ## Across the United States, which types of events have the greatest economic 
 ## consequences?
 
+## Preqrequisite: storm.R
+
+## Packages
+library(ggplot2)
+library(gridExtra)
+
 econ <- storm %>%
     group_by(evtype, dmgType) %>%
     summarize(total = sum(dmgCount, na.rm = TRUE),
