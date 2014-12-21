@@ -15,28 +15,28 @@ econ <- storm %>%
     ungroup()
 econ
 
-## Top fatalities? Total vs. mean
+## Top property damage? Total vs. mean
 propTotal <- econ %>%
     filter(dmgType == "propdmg") %>%
     arrange(desc(total)) %>%
-    head(5)
+    head(3)
 propTotal
 propAvg <- econ %>%
     filter(dmgType == "propdmg") %>%
     arrange(desc(avg)) %>%
-    head(5)
+    head(3)
 propAvg
 
-## Top injuries? Total vs. mean
+## Top crop damage? Total vs. mean
 cropTotal<- econ %>%
     filter(dmgType == "cropdmg") %>%
     arrange(desc(total))  %>%
-    head(5)
+    head(3)
 cropTotal
 cropAvg <- econ %>%
     filter(dmgType == "cropdmg") %>%
     arrange(desc(avg)) %>%
-    head(5)
+    head(3)
 cropAvg
 
 ## Plot all four graphics together

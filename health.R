@@ -20,24 +20,24 @@ health
 fatTotal <- health %>%
     filter(injType == "fatalities") %>%
     arrange(desc(total)) %>%
-    head(5)
+    head(3)
 fatTotal
 fatAvg <- health %>%
     filter(injType == "fatalities") %>%
     arrange(desc(avg)) %>%
-    head(5)
+    head(3)
 fatAvg
 
 ## Top injuries? Total vs. mean
 injTotal<- health %>%
     filter(injType == "injuries") %>%
     arrange(desc(total))  %>%
-    head(5)
+    head(3)
 injTotal
 injAvg <- health %>%
     filter(injType == "injuries") %>%
     arrange(desc(avg)) %>%
-    head(5)
+    head(3)
 injAvg
 
 ## Plot all four graphics together
