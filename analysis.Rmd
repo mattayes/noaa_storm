@@ -1,0 +1,9 @@
+---
+title: "The Health and Economic Consequences of Storms"
+author: "Matthew Hayes"
+date: "12/20/2014"
+output: html_document
+---
+
+## Synopsis
+While tornados resulted in the most fatalities, both in total and on average, most injuries come from wildfires (total) and heat waves (on average). Property and crop damage share a common theme: too much water isn't good. Floods, hurricanes, and typhoons top the lists, both in total and on average. 
