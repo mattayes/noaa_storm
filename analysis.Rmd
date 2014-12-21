@@ -29,7 +29,7 @@ storm
 
 We'll only need seven variables: `EVTYPE`, `FATALITIES`, `INJURIES`, `PROPDMG`, `PROPDMGEXP`, `CROPDMG`, and `CROPDMGEXP`.
 
-```{r subset}
+```{r subset, cache = TRUE}
 storm <- storm %>%
     select(EVTYPE, FATALITIES:CROPDMGEXP)
 names(storm) <- tolower(names(storm))
@@ -108,7 +108,8 @@ health <- storm %>%
 health
 ```
 
-What are the top five "killer" storms, in total and on average?
+What are the top three "killer" storms, in total and on average?
+
 ```{r healthfat}
 fatTotal <- health %>%
     filter(injType == "fatalities") %>%
@@ -157,4 +158,74 @@ h4 <- ggplot(injAvg, aes(x = reorder(evtype, -avg), y = avg)) +
     labs(x = "Event Type", y = "Mean Injuries", 
          title = "Average Injuries per Event")
 grid.arrange(arrangeGrob(h1, h2, h3, h4, main = "Effects on Population Health"))
+```
+
+## Economic Consequences
+
+Across the United States, which types of events have the greatest economic consequences? We'll use `propdmg` and `cropdmg` as proxies for economic damage.
+
+As we did with `health`, let's look at total and mean property/crop damage by event type.
+
+```{r econ}
+econ <- storm %>%
+    group_by(evtype, dmgType) %>%
+    summarize(total = sum(dmgCount, na.rm = TRUE),
+              avg = mean(dmgCount, na.rm = TRUE)
+    ) %>%
+    ungroup()
+econ
+```
+
+Which storms are the most costly with respect to property?
+
+```{r property}
+propTotal <- econ %>%
+    filter(dmgType == "propdmg") %>%
+    arrange(desc(total)) %>%
+    head(3)
+propTotal
+propAvg <- econ %>%
+    filter(dmgType == "propdmg") %>%
+    arrange(desc(avg)) %>%
+    head(3)
+propAvg
+```
+
+Taken loosely, too much water and wind is a very bad thing when it comes to property. Does this hold true for crop damage as well?
+
+```{r crop}
+cropTotal<- econ %>%
+    filter(dmgType == "cropdmg") %>%
+    arrange(desc(total))  %>%
+    head(3)
+cropTotal
+cropAvg <- econ %>%
+    filter(dmgType == "cropdmg") %>%
+    arrange(desc(avg)) %>%
+    head(3)
+cropAvg
+```
+
+Most definitely. Unlike health, economic consequences tend to be consistent across property and crops, as well as in total and on average.
+
+Let's visualize our results.
+
+```{r econplot, fig.height = 8, fig.width = 16}
+e1 <- ggplot(propTotal, aes(x = reorder(evtype, -total), y = total)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Event Type", y = "Total (dollars)", 
+         title = "Highest Property Damage")
+e2 <- ggplot(propAvg, aes(x = reorder(evtype, -avg), y = avg)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Event Type", y = "Mean (dollars)",
+         title = "Average Property Damage per Event")
+e3 <- ggplot(cropTotal, aes(x = reorder(evtype, -total), y = total)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Event Type", y = "Total (dollars)",
+         title = "Highest Crop Damage")
+e4 <- ggplot(cropAvg, aes(x = reorder(evtype, -avg), y = avg)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Event Type", y = "Mean (dollars)",
+         title = "Average Crop Damage per Event")
+grid.arrange(arrangeGrob(e1, e2, e3, e4, main = "Economic Consequences"))
 ```
